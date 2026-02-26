@@ -1,15 +1,193 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useSpring, useMotionValue, AnimatePresence } from "framer-motion";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { TELEGRAM_LINK } from "@/lib/constants";
 
+interface HeroChatMessage {
+  id: number;
+  type: "user" | "bot";
+  content: React.ReactNode;
+  time: string;
+}
+
+const heroMessages: HeroChatMessage[] = [
+  {
+    id: 1,
+    type: "user",
+    content: <p className="text-sm text-gray-800">¿Qué tareas tengo para esta semana?</p>,
+    time: "10:30",
+  },
+  {
+    id: 2,
+    type: "bot",
+    content: (
+      <>
+        <p className="text-sm text-gray-800 font-medium mb-2">Tienes 3 entregas esta semana:</p>
+        <div className="space-y-1.5 text-xs text-gray-700">
+          <div className="flex items-start gap-2">
+            <span className="text-red-500 mt-0.5">●</span>
+            <div>
+              <p className="font-medium">Práctica 4 - Algoritmos</p>
+              <p className="text-gray-500">Mar 26 Feb</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="text-yellow-500 mt-0.5">●</span>
+            <div>
+              <p className="font-medium">Ensayo - Filosofía</p>
+              <p className="text-gray-500">Jue 28 Feb</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="text-green-500 mt-0.5">●</span>
+            <div>
+              <p className="font-medium">Informe Lab - Física</p>
+              <p className="text-gray-500">Vie 1 Mar</p>
+            </div>
+          </div>
+        </div>
+      </>
+    ),
+    time: "10:30",
+  },
+  {
+    id: 3,
+    type: "user",
+    content: <p className="text-sm text-gray-800">¿Y mi nota de Algoritmos?</p>,
+    time: "10:31",
+  },
+  {
+    id: 4,
+    type: "bot",
+    content: (
+      <>
+        <p className="text-sm text-gray-800">
+          Tu última nota en <span className="font-semibold">Algoritmos</span>:
+        </p>
+        <div className="mt-1 flex items-center gap-2">
+          <span className="text-2xl font-bold text-primary-600">8.5</span>
+          <span className="text-xs text-gray-500">/ 10</span>
+        </div>
+      </>
+    ),
+    time: "10:31",
+  },
+];
+
+function TypingDots() {
+  return (
+    <div className="flex justify-start">
+      <div className="bg-white rounded-xl rounded-tl-sm px-4 py-3 shadow-sm">
+        <div className="flex gap-1">
+          <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+          <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+          <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Hero() {
+  const [visibleMessages, setVisibleMessages] = useState<HeroChatMessage[]>([]);
+  const [showTyping, setShowTyping] = useState(false);
+  const chatRef = useRef<HTMLDivElement>(null);
+
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const springX = useSpring(mouseX, { stiffness: 50, damping: 20 });
+  const springY = useSpring(mouseY, { stiffness: 50, damping: 20 });
+  const springX2 = useSpring(mouseX, { stiffness: 30, damping: 25 });
+  const springY2 = useSpring(mouseY, { stiffness: 30, damping: 25 });
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      const x = (e.clientX / window.innerWidth - 0.5) * 40;
+      const y = (e.clientY / window.innerHeight - 0.5) * 40;
+      mouseX.set(x);
+      mouseY.set(y);
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, [mouseX, mouseY]);
+
+  const scrollToBottom = useCallback(() => {
+    if (chatRef.current) {
+      chatRef.current.scrollTop = chatRef.current.scrollHeight;
+    }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    let timeouts: ReturnType<typeof setTimeout>[] = [];
+
+    const runLoop = () => {
+      setVisibleMessages([]);
+      setShowTyping(false);
+      let currentIndex = 0;
+
+      const showNext = () => {
+        if (cancelled || currentIndex >= heroMessages.length) {
+          if (!cancelled) {
+            // Wait 3 seconds then reset and loop
+            const t = setTimeout(() => {
+              if (!cancelled) runLoop();
+            }, 3000);
+            timeouts.push(t);
+          }
+          return;
+        }
+
+        const msg = heroMessages[currentIndex];
+
+        if (msg.type === "bot") {
+          setShowTyping(true);
+          const t1 = setTimeout(() => {
+            if (cancelled) return;
+            setShowTyping(false);
+            setVisibleMessages((prev) => [...prev, msg]);
+            currentIndex++;
+            const t2 = setTimeout(scrollToBottom, 50);
+            timeouts.push(t2);
+            const t3 = setTimeout(showNext, 1000);
+            timeouts.push(t3);
+          }, 1000);
+          timeouts.push(t1);
+        } else {
+          setVisibleMessages((prev) => [...prev, msg]);
+          currentIndex++;
+          const t1 = setTimeout(scrollToBottom, 50);
+          timeouts.push(t1);
+          const t2 = setTimeout(showNext, 700);
+          timeouts.push(t2);
+        }
+      };
+
+      const t = setTimeout(showNext, 500);
+      timeouts.push(t);
+    };
+
+    runLoop();
+
+    return () => {
+      cancelled = true;
+      timeouts.forEach(clearTimeout);
+    };
+  }, [scrollToBottom]);
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
       {/* Background decoration */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary-50 via-white to-accent-50" />
-      <div className="absolute top-20 left-10 w-72 h-72 bg-primary-200/30 rounded-full blur-3xl" />
-      <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent-200/30 rounded-full blur-3xl" />
+      <motion.div
+        style={{ x: springX, y: springY }}
+        className="absolute top-20 left-10 w-72 h-72 bg-primary-200/30 rounded-full blur-3xl"
+      />
+      <motion.div
+        style={{ x: springX2, y: springY2 }}
+        className="absolute bottom-20 right-10 w-96 h-96 bg-accent-200/30 rounded-full blur-3xl"
+      />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -121,7 +299,7 @@ export default function Hero() {
             </div>
           </motion.div>
 
-          {/* Phone Mockup */}
+          {/* Phone Mockup - Animated */}
           <motion.div
             initial={{ opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
@@ -149,94 +327,52 @@ export default function Hero() {
                         <p className="text-white font-semibold text-sm">
                           AdiuTask Bot
                         </p>
-                        <p className="text-white/70 text-xs">en línea</p>
+                        <p className="text-white/70 text-xs">
+                          {showTyping ? "escribiendo..." : "en línea"}
+                        </p>
                       </div>
                     </div>
                   </div>
 
                   {/* Chat messages */}
-                  <div className="p-3 space-y-3 min-h-[360px] bg-[#e5ddd5]">
-                    {/* User message */}
-                    <div className="flex justify-end">
-                      <div className="bg-[#dcf8c6] rounded-xl rounded-tr-sm px-3 py-2 max-w-[85%] shadow-sm">
-                        <p className="text-sm text-gray-800">
-                          ¿Qué tareas tengo para esta semana?
-                        </p>
-                        <p className="text-[10px] text-gray-500 text-right mt-1">
-                          10:30
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Bot message */}
-                    <div className="flex justify-start">
-                      <div className="bg-white rounded-xl rounded-tl-sm px-3 py-2 max-w-[85%] shadow-sm">
-                        <p className="text-sm text-gray-800 font-medium mb-2">
-                          Tienes 3 entregas esta semana:
-                        </p>
-                        <div className="space-y-1.5 text-xs text-gray-700">
-                          <div className="flex items-start gap-2">
-                            <span className="text-red-500 mt-0.5">●</span>
-                            <div>
-                              <p className="font-medium">
-                                Práctica 4 - Algoritmos
-                              </p>
-                              <p className="text-gray-500">Mar 26 Feb</p>
-                            </div>
+                  <div
+                    ref={chatRef}
+                    className="p-3 space-y-3 min-h-[360px] max-h-[360px] bg-[#e5ddd5] overflow-y-auto scroll-smooth"
+                  >
+                    <AnimatePresence>
+                      {visibleMessages.map((msg) => (
+                        <motion.div
+                          key={msg.id}
+                          initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          transition={{ duration: 0.3 }}
+                          className={`flex ${msg.type === "user" ? "justify-end" : "justify-start"}`}
+                        >
+                          <div
+                            className={`${
+                              msg.type === "user"
+                                ? "bg-[#dcf8c6] rounded-xl rounded-tr-sm"
+                                : "bg-white rounded-xl rounded-tl-sm"
+                            } px-3 py-2 max-w-[85%] shadow-sm`}
+                          >
+                            {msg.content}
+                            <p className="text-[10px] text-gray-500 text-right mt-1">
+                              {msg.time}
+                            </p>
                           </div>
-                          <div className="flex items-start gap-2">
-                            <span className="text-yellow-500 mt-0.5">●</span>
-                            <div>
-                              <p className="font-medium">Ensayo - Filosofía</p>
-                              <p className="text-gray-500">Jue 28 Feb</p>
-                            </div>
-                          </div>
-                          <div className="flex items-start gap-2">
-                            <span className="text-green-500 mt-0.5">●</span>
-                            <div>
-                              <p className="font-medium">
-                                Informe Lab - Física
-                              </p>
-                              <p className="text-gray-500">Vie 1 Mar</p>
-                            </div>
-                          </div>
-                        </div>
-                        <p className="text-[10px] text-gray-500 text-right mt-2">
-                          10:30
-                        </p>
-                      </div>
-                    </div>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
 
-                    {/* User message */}
-                    <div className="flex justify-end">
-                      <div className="bg-[#dcf8c6] rounded-xl rounded-tr-sm px-3 py-2 max-w-[85%] shadow-sm">
-                        <p className="text-sm text-gray-800">
-                          ¿Y mi nota de Algoritmos?
-                        </p>
-                        <p className="text-[10px] text-gray-500 text-right mt-1">
-                          10:31
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Bot message */}
-                    <div className="flex justify-start">
-                      <div className="bg-white rounded-xl rounded-tl-sm px-3 py-2 max-w-[85%] shadow-sm">
-                        <p className="text-sm text-gray-800">
-                          Tu última nota en{" "}
-                          <span className="font-semibold">Algoritmos</span>:
-                        </p>
-                        <div className="mt-1 flex items-center gap-2">
-                          <span className="text-2xl font-bold text-primary-600">
-                            8.5
-                          </span>
-                          <span className="text-xs text-gray-500">/ 10</span>
-                        </div>
-                        <p className="text-[10px] text-gray-500 text-right mt-1">
-                          10:31
-                        </p>
-                      </div>
-                    </div>
+                    {showTyping && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <TypingDots />
+                      </motion.div>
+                    )}
                   </div>
 
                   {/* Input bar */}

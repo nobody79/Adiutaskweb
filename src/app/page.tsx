@@ -2,11 +2,14 @@ import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import Stats from "@/components/Stats";
 import Problem from "@/components/Problem";
+import BeforeAfter from "@/components/BeforeAfter";
 import HowItWorks from "@/components/HowItWorks";
+import ChatDemo from "@/components/ChatDemo";
 import Features from "@/components/Features";
 import Universities from "@/components/Universities";
 import ForWho from "@/components/ForWho";
 import Pricing from "@/components/Pricing";
+import TrustBadges from "@/components/TrustBadges";
 import Waitlist from "@/components/Waitlist";
 import FAQ from "@/components/FAQ";
 import CTAFinal from "@/components/CTAFinal";
@@ -28,11 +31,14 @@ export default function Home() {
         <Hero />
         <Stats />
         <Problem />
+        <BeforeAfter />
         <HowItWorks />
+        <ChatDemo />
         <Features />
         <Universities />
         <ForWho />
         <Pricing />
+        <TrustBadges />
         <Waitlist />
         <FAQ />
         <CTAFinal />

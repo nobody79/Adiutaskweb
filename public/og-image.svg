@@ -1,0 +1,18 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1e3a8a"/>
+      <stop offset="0.5" stop-color="#2563eb"/>
+      <stop offset="1" stop-color="#7c3aed"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <circle cx="950" cy="150" r="200" fill="white" opacity="0.05"/>
+  <circle cx="200" cy="500" r="300" fill="white" opacity="0.03"/>
+  <rect x="80" y="200" width="80" height="80" rx="18" fill="white" opacity="0.9"/>
+  <text x="120" y="260" text-anchor="middle" font-family="Inter,system-ui,sans-serif" font-weight="800" font-size="50" fill="#2563eb">A</text>
+  <text x="180" y="258" font-family="Inter,system-ui,sans-serif" font-weight="800" font-size="48" fill="white">AdiuTask</text>
+  <text x="80" y="350" font-family="Inter,system-ui,sans-serif" font-weight="700" font-size="56" fill="white">Tu universidad,</text>
+  <text x="80" y="420" font-family="Inter,system-ui,sans-serif" font-weight="700" font-size="56" fill="#93c5fd">en tu bolsillo</text>
+  <text x="80" y="490" font-family="Inter,system-ui,sans-serif" font-weight="400" font-size="28" fill="white" opacity="0.8">Horarios, tareas, notas y más desde Telegram</text>
+</svg>
